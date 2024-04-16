@@ -14,6 +14,9 @@ var builder = CustomBuilder.ChatCompletion(
 );
 //builder.Services.AddLogging(c => c.SetMinimumLevel(LogLevel.Trace).AddDebug());
 
+//https://www.codemag.com/Article/2403061/Semantic-Kernel-101-Part-2
+
+
 var chatMessages = new ChatHistory("""
                                    You are a friendly assistant who likes to follow the rules. You will complete required steps
                                    and request approval before taking any consequential actions. If the user doesn't provide
@@ -37,7 +40,6 @@ kernel.ImportPluginFromPromptDirectory(pluginDirectory: folderWithPlugins);
 var template =
     $"""
      I am in Lisbon right now. Today is {DateTime.Now:D}. I want to write an email to my boss (info@skitsanos.com) that i want to move here.
-     Summarize the climate for today and offer to review summary.
      """;
 //Be creative about the subject of email.""";
 
@@ -55,9 +57,24 @@ OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
     ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
 };
 
-var msgs = await chatCompletionService.GetChatMessageContentsAsync(chatMessages,
-    executionSettings: openAIPromptExecutionSettings);
-foreach (var content in msgs)
+// var msgs = await chatCompletionService.GetChatMessageContentsAsync(chatMessages,
+//     executionSettings: openAIPromptExecutionSettings);
+// foreach (var content in msgs)
+// {
+//     Console.WriteLine(content.Role.Label);
+//     Console.WriteLine(content.Content);
+// }
+
+chatMessages.AddUserMessage("""
+                            Add a joke about me might be getting late for a plane.
+                            """);
+
+//https://learn.microsoft.com/en-us/semantic-kernel/prompts/templatizing-prompts?tabs=Csharp
+var msgs2 = kernel.InvokeStreamingAsync<StreamingChatMessageContent>(chatMessages, new()
+{
+    { "history", string.Join("\n", chatMessages.Select(x => x.Role + ": " + x.Content)) }
+});
+foreach (var content in msgs2)
 {
     Console.WriteLine(content.Role.Label);
     Console.WriteLine(content.Content);

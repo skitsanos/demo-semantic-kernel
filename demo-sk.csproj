@@ -14,8 +14,4 @@
     <PackageReference Include="Microsoft.SemanticKernel.Plugins.Core" Version="1.7.1-alpha" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="KernelPlugins\Prompt\" />
-  </ItemGroup>
-
 </Project>
