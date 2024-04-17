@@ -1,5 +1,6 @@
 {
   "schema": 1,
+  "name": "joke_generator",
   "description": "Generate a funny joke",
   "type": "completion",
   "completion": {
@@ -8,5 +9,19 @@
     "top_p": 0.0,
     "presence_penalty": 0.0,
     "frequency_penalty": 0.0
-  }
+  },
+  "input_variables": [
+    {
+      "name": "input",
+      "description": "Text to summarize",
+      "default": "",
+      "is_required": true
+    },
+    {
+      "name": "style",
+      "description": "Style of the joke",
+      "default": "",
+      "is_required": true
+    }
+  ]
 }
