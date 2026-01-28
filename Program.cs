@@ -1,54 +1,32 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 using GedankRayze.KernelBuilders;
+using demo_sk.Demos;
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
 
-var builder = CustomBuilder.ChatCompletion(
-    baseUrl: "https://api.groq.com/openai/v1",
-    Environment.GetEnvironmentVariable("LLM_API_KEY") ?? string.Empty,
-    model: "mixtral-8x7b-32768"
-);
+DotNetEnv.Env.NoClobber().Load();
 
-//https://www.codemag.com/Article/2403061/Semantic-Kernel-101-Part-2
+var baseUrl = Environment.GetEnvironmentVariable("LLM_BASE_URL");
+var apiKey = Environment.GetEnvironmentVariable("LLM_API_KEY");
+var model = Environment.GetEnvironmentVariable("LLM_MODEL");
 
-var chatMessages = new ChatHistory("""
-                                   You are a friendly assistant who likes to follow the rules. You will complete required steps
-                                   and request approval before taking any consequential actions. If the user doesn't provide
-                                   enough information for you to complete a task, you will keep asking questions until you have
-                                   enough information to complete the task.
-                                   """);
+if (string.IsNullOrWhiteSpace(baseUrl) ||
+    string.IsNullOrWhiteSpace(apiKey) ||
+    string.IsNullOrWhiteSpace(model))
+{
+    throw new InvalidOperationException(
+        "Missing LLM configuration. Ensure LLM_BASE_URL, LLM_API_KEY, and LLM_MODEL are set in the environment or a .env file.");
+}
 
-builder.Plugins.AddFromType<EmailPlannerPlugin>();
-
+var builder = CustomBuilder.ChatCompletion(baseUrl: baseUrl, apiKey, model: model);
 var kernel = builder.Build();
 
-chatMessages.AddUserMessage("""
-                            I want to write an email to Gedank Rayze about me moving to Lisbon, sign it with your name.
-                            """);
-
-
-var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
-
-OpenAIPromptExecutionSettings execSettings = new()
+var selection = DemoMenu.PromptForSelection(args, DemoCatalog.All);
+if (selection is null)
 {
-    ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
-};
+    return;
+}
 
-var chat = await chatCompletionService.GetChatMessageContentsAsync(
-    chatMessages,
-    execSettings,
-    kernel
-);
-
-foreach (var content in chat) Console.Write(content.Content);
-
-// var msgs = await chatCompletionService.GetChatMessageContentsAsync(
-//     chatHistory: chatMessages,
-//     executionSettings: execSettings);
-// foreach (var content in msgs)
-// {
-//     Console.WriteLine(content.Role.Label);
-//     Console.WriteLine(content.Content);
-// }
+var demo = DemoCatalog.All[selection.Value];
+Console.WriteLine($"Running: {demo.Title}\n");
+await demo.RunAsync(kernel);
